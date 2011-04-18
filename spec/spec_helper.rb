@@ -4,7 +4,7 @@ SERVOLUX_SPEC_HELPER = true
 
 require 'rubygems'
 require 'logging'
-require 'spec'
+require 'rspec'
 require 'spec/logging_helper'
 
 require File.expand_path(
@@ -12,7 +12,7 @@ require File.expand_path(
 
 include Logging.globally
 
-Spec::Runner.configure do |config|
+RSpec.configure do |config|
   include Spec::LoggingHelper
   config.capture_log_messages
 
