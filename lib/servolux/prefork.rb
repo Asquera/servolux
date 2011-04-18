@@ -159,11 +159,12 @@ class Servolux::Prefork
   # The pre-forking worker pool makes no effort to restart dead workers. It is
   # left to the user to implement this functionality.
   #
-  def initialize( opts = {}, &block )
+  def initialize( opts = {}, worker_opts = {}, &block )
     @timeout = opts[:timeout]
     @module = opts[:module]
     @module = Module.new { define_method :execute, &block } if block
     @workers = []
+    @worker_opts = worker_opts
     @harvest = Queue.new
 
     raise ArgumentError, 'No code was given to execute by the workers.' unless @module
@@ -179,7 +180,7 @@ class Servolux::Prefork
     @workers.clear
 
     number.times {
-      @workers << Worker.new(self)
+      @workers << Worker.new(self, @worker_opts)
       @workers.last.extend @module
     }
     @workers.each { |worker| worker.start; pause }
@@ -266,15 +267,16 @@ private
   #
   class Worker
 
-    attr_reader :error
+    attr_reader :error, :options
 
     # Create a new worker that belongs to the _prefork_ pool.
     #
     # @param [Prefork] prefork The prefork pool that created this worker.
     #
-    def initialize( prefork )
+    def initialize( prefork, opts = {} )
       @timeout = prefork.timeout
       @harvest = prefork.harvest
+      @options = opts
       @thread = nil
       @piper = nil
       @error = nil
